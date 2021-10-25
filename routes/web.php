@@ -19,13 +19,17 @@ Route::get('/usuarios', function () {
     return 'Estás viendo los usuarios';
 });
 
-//Una simple cosa de prueba
-Route::get('/usuarios/{id}', function ($id) {
-    $val = intval($id);
+// Route::get('/usuarios', function () {
+//     return 'Estás viendo los datos del usuario ' . $_GET['id'];
+// });
 
-    if (is_int($val) && $val > 0) {
-        return 'Estás viendo el perfil del usuario ' . $val;
-    } else {
-        return 'Id de usuario incorrecta';
-    }
+Route::get('/usuarios/{id}', function ($id) {
+    return 'Mostrando detalles del usuario ' . $id;
+})->where('id', '[0-9]+');
+
+Route::get('/usuarios/{name}/{nickname?}', function ($name, $nickname = null) {
+    $common = 'Bienvenido ' . $name . '. ';
+    return $nickname
+        ? $common . 'Tu apodo es: ' . $nickname
+        : $common;
 });

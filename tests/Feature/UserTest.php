@@ -8,13 +8,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserTest extends TestCase
 {
-    /**
-     * A basic test example.
-     *
-     * @return void
-     */
-    public function testExample()
+    /** @test */
+    public function it_loads_the_users_list_page()
     {
-        $this->assertTrue(true);
+        $this->get('usuarios')
+            ->assertStatus(200)
+            ->assertSee('usuarios');
     }
 }
