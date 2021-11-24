@@ -23,4 +23,11 @@ class WelcomeUsersTest extends TestCase
             ->assertStatus(200)
             ->assertSee('Bienvenido Manolo. Tu apodo es: contreras');
     }
+
+    /** @test */
+    public function it_fails_when_name_has_strange_chars()
+    {
+        $this->get('usuarios/8s7a')
+            ->assertStatus(404);
+    }
 }
