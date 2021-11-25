@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "amiralizadeh9480.laravel-extra-intellisense"
+        "amiralizadeh9480.laravel-extra-intellisense",
+        "namesmt.blade-color"
     ]
 }

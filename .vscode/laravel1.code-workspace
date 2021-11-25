@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"editor.defaultFormatter": "bmewburn.vscode-intelephense-client",
+		"editor.formatOnSave": true,
+		"intelephense.environment.phpVersion": "5.5.0",
+		"[blade]": {
+			"editor.defaultFormatter": "shufo.vscode-blade-formatter"
+		}
+	}
+}

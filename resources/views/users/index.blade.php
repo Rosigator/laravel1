@@ -9,11 +9,14 @@
 </head>
 
 <body>
-    <h1><?= $title ?></h1>
+    <h1> {{ $title }} </h1>
+    <hr />
     <ul>
-        <?php foreach ($users as $user) : ?>
-            <li><?= e($user) ?></li>
-        <?php endforeach ?>
+        @forelse ($users as $user)
+            <li>{{ $user }}</li>
+        @empty
+            <li>No hay usuarios registrados</li>
+        @endforelse
     </ul>
 </body>
 
