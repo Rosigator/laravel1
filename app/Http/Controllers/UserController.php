@@ -19,7 +19,7 @@ class UserController extends Controller
             ];
         }
 
-        $title = 'Listado de Usuarios';
+        $title = 'Lista de Usuarios';
 
         return view('users.index', compact('users', 'title'));
     }
