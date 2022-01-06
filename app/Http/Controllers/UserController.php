@@ -31,11 +31,11 @@ class UserController extends Controller
 
     public function show($id)
     {
-        return view('users.show')->with(compact('id'));
+        return view('users.show', compact('id'));
     }
 
     public function edit($id)
     {
-        return view('users.edit')->with(compact('id'));
+        return view('users.edit', compact('id'));
     }
 }
