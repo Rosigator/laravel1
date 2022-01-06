@@ -67,9 +67,13 @@
         </nav>
     </header>
 
-    <!-- Begin page content -->
+    <main class="mt-5 pt-3 mx-2">
 
-    @yield('middle')
+        <!-- Begin page content -->
+
+        @yield('content')
+
+    </main>
 
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container">

@@ -1,4 +1,4 @@
-@extends('layouts.sidebar')
+@extends('layouts.layout')
 
 @section('title', 'Usuarios')
 
@@ -12,11 +12,5 @@
             <li>No hay usuarios registrados</li>
         @endforelse
     </ul>
-
-@stop
-
-@section('sidebar')
-
-    <p>Barra lateral</p>
 
 @stop

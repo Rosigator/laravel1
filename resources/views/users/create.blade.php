@@ -1,4 +1,4 @@
-@extends('layouts.sideless')
+@extends('layouts.layout')
 
 @section('title', 'Creación')
 
