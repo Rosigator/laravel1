@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddProfessionToUsersTable extends Migration
+class AddForeignKeyProfessionToUsersTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,9 +14,7 @@ class AddProfessionToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('profession')
-                ->nullable()
-                ->after('email');
+            $table->foreign('profession_id')->references('id')->on('professions');
         });
     }
 
@@ -28,7 +26,7 @@ class AddProfessionToUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('profession');
+            $table->dropForeign(['profession_id']);
         });
     }
 }
