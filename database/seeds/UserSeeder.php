@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\User;
+use App\Profession;
 
 class UserSeeder extends Seeder
 {
@@ -12,10 +14,14 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('users')->insert([
-            'name' => 'Perico Palotes Fernández',
-            'email' => 'pericopalotes@mail.com',
+        factory(User::class)->create([
+            'name' => 'Héctor Castro Gómez',
+            'email' => 'hector@mail.com',
+            'is_admin' => true,
+            'profession_id' => 4,
             'password' => bcrypt('secret')
         ]);
+
+        factory(User::class, 20)->create();
     }
 }
