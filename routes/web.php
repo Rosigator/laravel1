@@ -14,12 +14,14 @@ Route::get('/usuarios/{user}', 'UserController@show')
     ->where('user', '[0-9]+')
     ->name('user.show');
 
-Route::get('usuarios/{id}/editar', 'UserController@edit')
-    ->where('id', '\d+')
+Route::get('usuarios/{user}/editar', 'UserController@edit')
+    ->where('user', '\d+')
     ->name('user.edit');
 
-Route::get('usuarios/crear', 'UserController@create')
-    ->name('user.create');
+Route::get('usuarios/nuevo', 'UserController@create')
+    ->name('user.new');
+
+Route::post('usuarios/crear', 'UserController@store');
 
 Route::get('/usuarios/{name}/{nickname?}', 'WelcomeUserController')
     ->where('name', '[a-zA-Z]+')

@@ -2,7 +2,7 @@
 
 use Faker\Generator as Faker;
 use App\User as User;
-use App\Profession as Profession;
+use Illuminate\Support\Facades\DB as DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,13 +17,17 @@ use App\Profession as Profession;
 
 $factory->define(User::class, function (Faker $faker) {
 
-    $num_professions = Profession::all()->count();
+    $num_professions = DB::table('professions')->count();
+
+    $profession_id = $num_professions === 0 ?
+        null :
+        $faker->numberBetween(1, $num_professions);
 
     return [
         'name' => $faker->name,
         'email' => $faker->unique()->safeEmail,
         'password' => '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', // secret
-        'profession_id' => $faker->numberBetween(1, $num_professions),
+        'profession_id' => $profession_id,
         'remember_token' => str_random(10),
     ];
 });

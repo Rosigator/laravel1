@@ -52,6 +52,10 @@
                             <a class="nav-link active" aria-current="page"
                                 href="http://laravel1.local/usuarios">Usuarios</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page"
+                                href="http://laravel1.local/usuarios/nuevo">Registrar Usuario</a>
+                        </li>
                     </ul>
                     <form class="d-flex">
                         <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
