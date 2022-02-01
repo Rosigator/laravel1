@@ -34,8 +34,9 @@
 
     @endif
 
-    <form method="POST" action="{{ url('usuarios/editar') }}">
+    <form method="POST" action="{{ url("usuarios/{$user->id}") }}">
 
+        {{ method_field('PUT') }}
         {{ csrf_field() }}
 
         <div>

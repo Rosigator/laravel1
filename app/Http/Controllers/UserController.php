@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\User;
 use App\Profession;
+use Illuminate\Validation\Rule as Rule;
 
 class UserController extends Controller
 {
@@ -30,6 +31,26 @@ class UserController extends Controller
         $professions = Profession::pluck('title');
 
         return view('users.edit', compact('user', 'professions'));
+    }
+
+    public function update(User $user)
+    {
+        $data = request()->validate([
+            'name' => 'required',
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'profession' => 'exists:professions,title',
+            'password' => ''
+        ]);
+
+        if ($data['password'] != null) {
+            $data['password'] = bcrypt($data['password']);
+        } else {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+
+        return redirect("usuarios/{$user->id}");
     }
 
     // Creación de usuarios
