@@ -18,20 +18,25 @@ Route::get('/usuarios/{user}', 'UserController@show')
     ->where('user', '[0-9]+')
     ->name('user.show');
 
-//Edición de Usuarios
-Route::get('usuarios/{user}/editar', 'UserController@edit')
-    ->where('user', '\d+')
-    ->name('user.edit');
-
-Route::put('usuarios/{user}', 'UserController@update')
-    ->where('user', '\d+')
-    ->name('user.update');
-
 //Creación de Usuarios
 Route::get('usuarios/nuevo', 'UserController@create')
     ->name('user.new');
 
 Route::post('usuarios/crear', 'UserController@store');
+
+//Edición de Usuarios
+Route::get('usuarios/{user}/editar', 'UserController@edit')
+    ->where('user', '[0-9]+')
+    ->name('user.edit');
+
+Route::put('usuarios/{user}', 'UserController@update')
+    ->where('user', '[0-9]+')
+    ->name('user.update');
+
+//Eliminación de Usuarios
+Route::delete('usuarios/{user}', 'UserController@destroy')
+    ->where('user', '[0-9]+')
+    ->name('user.destroy');
 
 //Saludo a un Usuario
 Route::get('/usuarios/{name}/{nickname?}', 'WelcomeUserController')

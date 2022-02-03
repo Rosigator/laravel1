@@ -12,7 +12,9 @@
 
     <!-- Bootstrap core CSS -->
     <link href="{{ asset('docs/bootstrap-5.1.3/css/bootstrap.min.css') }}" rel="stylesheet">
-
+    <!-- Iconos -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic-bootstrap.min.css">
     <style>
         .bd-placeholder-img {
             font-size: 1.125rem;
@@ -35,7 +37,7 @@
     <link href="{{ asset('css/sticky-footer-navbar.css') }}" rel="stylesheet">
 </head>
 
-<body class="d-flex flex-column h-100  bg-gradient-success">
+<body class="d-flex h-100">
 
     <header>
         <!-- Fixed navbar -->
@@ -50,11 +52,11 @@
                     <ul class="navbar-nav me-auto mb-2 mb-md-0">
                         <li class="nav-item">
                             <a class="nav-link active" aria-current="page"
-                                href="http://laravel1.local/usuarios">Usuarios</a>
+                                href="{{ route('user.index') }}">Usuarios</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page"
-                                href="http://laravel1.local/usuarios/nuevo">Registrar Usuario</a>
+                            <a class="nav-link active" aria-current="page" href="{{ route('user.new') }}">Registrar
+                                Usuario</a>
                         </li>
                     </ul>
                     <form class="d-flex">
@@ -66,19 +68,13 @@
         </nav>
     </header>
 
-    <main class="mt-5 pt-3 mx-2">
+    <main class="mt-5 pt-3 mx-2 w-100">
 
         <!-- Begin page content -->
 
         @yield('content')
 
     </main>
-
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container">
-            <span class="text-muted">Tu página cutre de confianza. Ningún derecho reservado.</span>
-        </div>
-    </footer>
 
     <script src="{{ asset('docs/bootstrap-5.1.3/js/bootstrap.bundle.min.js') }}"></script>
 

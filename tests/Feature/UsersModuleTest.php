@@ -242,7 +242,7 @@ class UsersModuleTest extends TestCase
         $this->get("usuarios/{$user->id}/editar")
             ->assertStatus(200)
             ->assertViewIs('users.edit')
-            ->assertSee("Editando información del usuario $user->id")
+            ->assertSee("Editando información del usuario #{$user->id}")
             ->assertViewHas('user', function ($viewUser) use ($user) {
                 return $viewUser->id === $user->id;
             });
@@ -411,6 +411,22 @@ class UsersModuleTest extends TestCase
         $this->assertDatabaseHas('users', [
             'name' => 'Cocoloco Pérez',
             'email' => $oldemail
+        ]);
+    }
+
+    /** @test */
+    public function it_deletes_a_user()
+    {
+        $user = factory(User::class)->create([
+            'email' => 'miemail@mail.com'
+        ]);
+
+        $this->delete("usuarios/{$user->id}")
+            ->assertRedirect('usuarios');
+
+        $this->assertDatabaseMissing('users', [
+            'id' => $user->id,
+            'email' => 'miemail@mail.com'
         ]);
     }
 }
