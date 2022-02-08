@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\User;
 use App\Profession;
 use Illuminate\Validation\Rule as Rule;
+use App\UserProfile as UserProfile;
+use Illuminate\Support\Facades\DB as DB;
+use App\Http\Requests\CreateUserRequest as CreateUserRequest;
 
 class UserController extends Controller
 {
@@ -28,7 +31,9 @@ class UserController extends Controller
     //Edición de datos de usuario
     public function edit(User $user)
     {
-        $professions = Profession::pluck('title');
+        $professions = Profession::all()->filter(function ($value) use ($user) {
+            return $value->id != $user->profession->id;
+        });
 
         return view('users.edit', compact('user', 'professions'));
     }
@@ -56,28 +61,14 @@ class UserController extends Controller
     // Creación de usuarios
     public function create()
     {
-        $professions = Profession::pluck('title');
+        $professions = Profession::orderBy('title', 'ASC')->get();
 
         return view('users.create', compact('professions'));
     }
 
-    public function store()
+    public function store(CreateUserRequest $request)
     {
-        $data = request()->validate([
-            'name' => 'required',
-            'email' => ['required', 'email', 'unique:users,email'],
-            'profession' => 'exists:professions,title',
-            'password' => ['required', 'min:6']
-        ]);
-
-        $profession_id = Profession::where('title', $data['profession'])->value('id');
-
-        User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'profession_id' => $profession_id,
-            'password' => bcrypt($data['password'])
-        ]);
+        $request->createUser();
 
         return redirect('usuarios');
     }

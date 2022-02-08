@@ -46,14 +46,14 @@
                 </div>
 
                 <div class="form-group row mb-3">
-                    <label class="col-sm-2 col-form-label" for="profession">Profesión: </label>
-                    <select class="col-sm-10" name="profession" id="profession">
+                    <label class="col-sm-2 col-form-label" for="profession_id">Profesión: </label>
+                    <select class="col-sm-10" name="profession_id" id="profession_id">
 
-                        <option value="empty" selected></option>
+                        <option value="">Selecciona una profesión</option>
 
                         @foreach ($professions as $profession)
 
-                            <option value="{{ $profession }}">{{ $profession }}</option>
+                            <option value="{{ $profession->id }}">{{ $profession->title }}</option>
 
                         @endforeach
 
@@ -63,6 +63,18 @@
                 <div class="form-group row mb-3">
                     <label class="col-sm-2 col-form-label" for="password">Contraseña: </label>
                     <input class="col-sm-10" type="password" name="password" id="password">
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-sm-2 col-form-label" for="twitter">Twitter: </label>
+                    <input class="col-sm-10" type="url" name="twitter" id="twitter"
+                        value="{{ old('twitter', $user->twitter) }}">
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-sm-2 col-form-label" for="bio">Bio: </label>
+                    <textarea class="col-sm-10" name="bio" id="bio" cols="30"
+                        rows="10">{{ old('bio', $user->bio) }}</textarea>
                 </div>
 
             </form>
