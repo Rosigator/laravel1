@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use App\User as User;
 use Illuminate\Support\Facades\DB as DB;
-use App\Profession as Profession;
 use Illuminate\Validation\Rule as Rule;
 
 class CreateUserRequest extends FormRequest

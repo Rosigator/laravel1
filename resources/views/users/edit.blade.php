@@ -53,7 +53,9 @@
 
                         @foreach ($professions as $profession)
 
-                            <option value="{{ $profession->id }}">{{ $profession->title }}</option>
+                            <option value="{{ $profession->id }}"
+                                {{ $profession->id == $user->profile->profession->id ? ' selected' : '' }}>
+                                {{ $profession->title }}</option>
 
                         @endforeach
 
@@ -68,13 +70,13 @@
                 <div class="form-group row mb-3">
                     <label class="col-sm-2 col-form-label" for="twitter">Twitter: </label>
                     <input class="col-sm-10" type="url" name="twitter" id="twitter"
-                        value="{{ old('twitter', $user->twitter) }}">
+                        value="{{ old('twitter', $user->profile->twitter) }}">
                 </div>
 
                 <div class="form-group row mb-3">
                     <label class="col-sm-2 col-form-label" for="bio">Bio: </label>
                     <textarea class="col-sm-10" name="bio" id="bio" cols="30"
-                        rows="10">{{ old('bio', $user->bio) }}</textarea>
+                        rows="10">{{ old('bio', $user->profile->bio) }}</textarea>
                 </div>
 
             </form>

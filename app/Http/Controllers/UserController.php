@@ -31,9 +31,7 @@ class UserController extends Controller
     //Edición de datos de usuario
     public function edit(User $user)
     {
-        $professions = Profession::all()->filter(function ($value) use ($user) {
-            return $value->id != $user->profession->id;
-        });
+        $professions = Profession::all();
 
         return view('users.edit', compact('user', 'professions'));
     }
@@ -75,6 +73,7 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        $user->profile->delete();
         $user->delete();
 
         return redirect('usuarios');

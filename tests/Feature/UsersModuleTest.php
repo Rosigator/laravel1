@@ -76,9 +76,10 @@ class UsersModuleTest extends TestCase
 
         $this->get('usuarios/' . $user->id)
             ->assertStatus(200)
-            ->assertSee($user->name)
-            ->assertSee('Email: ' . $user->email)
-            ->assertSee('Profesión: ' . $profession->title);
+            ->assertViewIs('users.show')
+            ->assertViewHas('user', function ($viewUser) use ($user) {
+                return $viewUser->id == $user->id;
+            });
     }
 
     /** @test */
@@ -89,11 +90,16 @@ class UsersModuleTest extends TestCase
             'email' => 'pedro@mail.com',
         ]);
 
+        $profile = factory(UserProfile::class)->create([
+            'user_id' => $user->id
+        ]);
+
         $this->get('usuarios/' . $user->id)
             ->assertStatus(200)
-            ->assertSee($user->name)
-            ->assertSee('Email: ' . $user->email)
-            ->assertSee('Profesión: ');
+            ->assertViewIs('users.show')
+            ->assertViewHas('user', function ($viewUser) use ($user) {
+                return $viewUser->id == $user->id;
+            });
     }
 
     /** @test */
@@ -142,13 +148,12 @@ class UsersModuleTest extends TestCase
     public function the_name_field_is_required()
     {
         $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
-            'name' => ''
+            'name' => '',
         ]))
             ->assertRedirect('usuarios/nuevo')
             ->assertSessionHasErrors([
                 'name' => 'The name field is required.'
             ]);
-
         $this->assertDatabaseEmpty('users');
     }
 
@@ -279,9 +284,8 @@ class UsersModuleTest extends TestCase
     /** @test */
     public function it_loads_user_edit_page()
     {
-        $this->markTestIncomplete();
-
         $user = factory(User::class)->create();
+        $user->profile()->create(['bio' => 'asdf', 'profession_id' => null, 'twitter' => null]);
 
         $this->get("usuarios/{$user->id}/editar")
             ->assertStatus(200)
@@ -465,6 +469,10 @@ class UsersModuleTest extends TestCase
             'email' => 'miemail@mail.com'
         ]);
 
+        $user->profile()->create([
+            'bio' => 'asdf'
+        ]);
+
         $this->delete("usuarios/{$user->id}")
             ->assertRedirect('usuarios');
 
@@ -477,8 +485,6 @@ class UsersModuleTest extends TestCase
     /** @test */
     public function the_twitter_field_is_optional()
     {
-        $this->withoutExceptionHandling();
-
         $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
             'twitter' => ''
         ]))->assertRedirect('usuarios');
