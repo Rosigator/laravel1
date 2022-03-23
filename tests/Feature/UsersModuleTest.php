@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\User as User;
 use App\Profession as Profession;
 use App\UserProfile as UserProfile;
+use App\Skill as Skill;
 use Illuminate\Support\Facades\DB as DB;
 
 class UsersModuleTest extends TestCase
@@ -26,7 +27,8 @@ class UsersModuleTest extends TestCase
             'profession_id' => $this->profession->id,
             'password' => 'secret',
             'twitter' => 'https://twitter.com/fernando',
-            'bio' => 'Soy un tío de puta madre.'
+            'bio' => 'Soy un tío de puta madre.',
+            'role' => 'user'
         ], $custom));
     }
 
@@ -66,7 +68,7 @@ class UsersModuleTest extends TestCase
 
         $user = factory(User::class)->create([
             'name' => 'Pedro Pérez',
-            'email' => 'pedro@mail.com',
+            'email' => 'pedro@mail.com'
         ]);
 
         $profile = factory(UserProfile::class)->create([
@@ -87,7 +89,7 @@ class UsersModuleTest extends TestCase
     {
         $user = factory(User::class)->create([
             'name' => 'Pedro Pérez',
-            'email' => 'pedro@mail.com',
+            'email' => 'pedro@mail.com'
         ]);
 
         $profile = factory(UserProfile::class)->create([
@@ -113,34 +115,76 @@ class UsersModuleTest extends TestCase
     /** @test */
     public function it_loads_user_creation_page()
     {
+        $this->withoutExceptionHandling();
+
         $profession = factory(Profession::class)->create();
+
+        $skillA = factory(Skill::class)->create();
+        $skillB = factory(Skill::class)->create();
 
         $this->get('usuarios/nuevo')
             ->assertStatus(200)
             ->assertViewIs('users.create')
             ->assertViewHas('professions', function ($professions) use ($profession) {
                 return $professions->contains($profession);
+            })
+            ->assertViewHas('skills', function ($skills) use ($skillA, $skillB) {
+                return $skills->contains($skillA) && $skills->contains($skillB);
             });
     }
 
     /** @test */
     public function it_creates_a_new_user()
     {
-        $this->post('usuarios/crear', $this->getValidData())
+        $this->withoutExceptionHandling();
+
+        $skillA = factory(Skill::class)->create([
+            'name' => 'skillA'
+        ]);
+        $skillB = factory(Skill::class)->create([
+            'name' => 'skillB'
+        ]);
+        $skillC = factory(Skill::class)->create([       //skill que no voy a seleccionar
+            'name' => 'skillC'
+        ]);
+
+        $this->post('usuarios/crear', $this->getValidData([
+            'skills' => [
+                $skillA->id => $skillA->id,
+                $skillB->id => $skillB->id,
+            ]
+        ]))
             ->assertRedirect('usuarios');
 
         $this->assertCredentials([
             'name' => 'Fernando Contreras',
             'email' => 'fernando@mail.com',
-            'is_admin' => 0,
             'password' => 'secret',
+            'role' => 'user'
         ]);
+
+        $user = User::findByEmail('fernando@mail.com');
 
         $this->assertDatabaseHas('user_profiles', [
             'profession_id' => $this->profession->id,
             'twitter' => 'https://twitter.com/fernando',
             'bio' => 'Soy un tío de puta madre.',
-            'user_id' => User::findByEmail('fernando@mail.com')->id
+            'user_id' => $user->id
+        ]);
+
+        $this->assertDatabaseHas('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $skillA->id
+        ]);
+
+        $this->assertDatabaseHas('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $skillB->id
+        ]);
+
+        $this->assertDatabaseMissing('user_skill', [   //skill que no voy a seleccionar
+            'user_id' => $user->id,
+            'skill_id' => $skillC->id
         ]);
     }
 
@@ -158,20 +202,6 @@ class UsersModuleTest extends TestCase
     }
 
     /** @test */
-    public function the_email_field_is_required()
-    {
-        $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
-            'email' => null
-        ]))
-            ->assertRedirect('usuarios/nuevo')
-            ->assertSessionHasErrors([
-                'email' => 'The email field is required.'
-            ]);
-
-        $this->assertDatabaseEmpty('users');
-    }
-
-    /** @test */
     public function the_password_field_is_required()
     {
         $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
@@ -180,6 +210,20 @@ class UsersModuleTest extends TestCase
             ->assertRedirect('usuarios/nuevo')
             ->assertSessionHasErrors([
                 'password' => 'The password field is required.'
+            ]);
+
+        $this->assertDatabaseEmpty('users');
+    }
+
+    /** @test */
+    public function the_email_field_is_required()
+    {
+        $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
+            'email' => null
+        ]))
+            ->assertRedirect('usuarios/nuevo')
+            ->assertSessionHasErrors([
+                'email' => 'The email field is required.'
             ]);
 
         $this->assertDatabaseEmpty('users');
@@ -203,7 +247,7 @@ class UsersModuleTest extends TestCase
     public function the_email_must_be_unique()
     {
         factory(User::class)->create([
-            'email' => 'oldemail@mail.com'
+            'email' => 'oldemail@mail.com',
         ]);
 
         $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
@@ -282,9 +326,93 @@ class UsersModuleTest extends TestCase
     }
 
     /** @test */
+    public function skills_are_optional()
+    {
+        $this->from('/usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
+            'skills' => null
+        ]))->assertRedirect('usuarios');
+
+        $this->assertCredentials([
+            'name' => 'Fernando Contreras',
+            'email' => 'fernando@mail.com',
+            'password' => 'secret',
+        ]);
+
+        $this->assertDatabaseEmpty('user_skill');
+    }
+
+    /** @test */
+    public function the_skills_must_be_an_array()
+    {
+        $this->from('/usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
+            'skills' => 'PHP, POO'
+        ]))
+            ->assertRedirect('usuarios/nuevo')
+            ->assertSessionHasErrors([
+                'skills' => 'The skills must be an array.'
+            ]);
+
+        $this->assertDatabaseEmpty('users');
+        $this->assertDatabaseEmpty('user_skill');
+    }
+
+    /** @test */
+    public function the_skills_must_be_valid()
+    {
+        $skillA = factory(Skill::class)->create([
+            'name' => 'skillA'
+        ]);
+        $skillB = factory(Skill::class)->create([
+            'name' => 'skillB'
+        ]);
+
+        $this->from('usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
+            'skills' => [
+                $skillA->id => $skillA->id,
+                $skillB->id + 99 => $skillB->id + 99
+            ]
+        ]))
+            ->assertRedirect('usuarios/nuevo')
+            ->assertSessionHasErrors([
+                'skills' => 'The chosen skill is not valid.'
+            ]);
+
+        $this->assertDatabaseEmpty('users');
+        $this->assertDatabaseEmpty('user_skill');
+    }
+
+    /** @test */
+    public function the_role_field_is_optional()
+    {
+        $this->from('/usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
+            'role' => null
+        ]))->assertRedirect('usuarios');
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'fernando@mail.com',
+            'role' => 'user'
+        ]);
+    }
+
+    /** @test */
+    public function the_role_field_must_be_valid()
+    {
+        //$this->withoutExceptionHandling();
+
+        $this->from('/usuarios/nuevo')->post('usuarios/crear', $this->getValidData([
+            'role' => 'invalid-role'
+        ]))
+            ->assertRedirect('usuarios/nuevo')
+            ->assertSessionHasErrors('role');
+
+        $this->assertDatabaseEmpty('users');
+    }
+
+    /** @test */
     public function it_loads_user_edit_page()
     {
         $user = factory(User::class)->create();
+
         $user->profile()->create(['bio' => 'asdf', 'profession_id' => null, 'twitter' => null]);
 
         $this->get("usuarios/{$user->id}/editar")
@@ -492,7 +620,6 @@ class UsersModuleTest extends TestCase
         $this->assertCredentials([
             'name' => 'Fernando Contreras',
             'email' => 'fernando@mail.com',
-            'is_admin' => 0,
             'password' => 'secret',
         ]);
 

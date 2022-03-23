@@ -13,14 +13,17 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->truncateTables([
-            // 'professions',
-            'user_profiles'
+            'users',
+            'professions',
+            'skills',
+            'user_profiles',
+            'user_skill'
         ]);
 
         $this->call([
-            UserSeeder::class,
             ProfessionSeeder::class,
-            UserProfileSeeder::class
+            SkillSeeder::class,
+            UserSeeder::class
         ]);
     }
 

@@ -2,10 +2,11 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Role;
 use App\User as User;
-use Illuminate\Support\Facades\DB as DB;
 use Illuminate\Validation\Rule as Rule;
+use Illuminate\Support\Facades\DB as DB;
+use Illuminate\Foundation\Http\FormRequest;
 
 class CreateUserRequest extends FormRequest
 {
@@ -29,9 +30,17 @@ class CreateUserRequest extends FormRequest
         return [
             'name' => 'required',
             'email' => ['required', 'email', 'unique:users,email'],
+            'role' => [
+                'nullable',
+                Rule::in(Role::getList())
+            ],
             'profession_id' => [
                 'nullable',
                 Rule::exists('professions', 'id')->whereNull('deleted_at')
+            ],
+            'skills' => [
+                'array',
+                Rule::exists('skills', 'id')
             ],
             'password' => ['required', 'min:6'],
             'twitter' => ['url', 'nullable'],
@@ -42,7 +51,8 @@ class CreateUserRequest extends FormRequest
     public function messages()
     {
         return [
-            'profession_id.exists' => 'The chosen profession is not valid.'
+            'profession_id.exists' => 'The chosen profession is not valid.',
+            'skills.exists' => 'The chosen skill is not valid.',
         ];
     }
 
@@ -50,17 +60,23 @@ class CreateUserRequest extends FormRequest
     {
         DB::transaction(function () {
 
-            $user = User::create([
+            $user = new User([
                 'name' => $this->name,
                 'email' => $this->email,
                 'password' => bcrypt($this->password)
             ]);
+
+            $user->role = $this->role ?? 'user';
+
+            $user->save();
 
             $user->profile()->create([
                 'profession_id' => $this->profession_id,
                 'twitter' => $this->twitter,
                 'bio' => $this->bio
             ]);
+
+            $user->skills()->attach($this->skills);
         });
     }
 }

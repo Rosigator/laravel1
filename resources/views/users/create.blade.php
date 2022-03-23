@@ -15,9 +15,7 @@
                     <ul>
 
                         @foreach ($errors->all() as $error)
-
                             <li>{{ $error }}</li>
-
                         @endforeach
 
                     </ul>
@@ -47,15 +45,50 @@
                         <option value="">Selecciona una profesión</option>
 
                         @foreach ($professions as $profession)
-
                             <option value="{{ $profession->id }}"
                                 {{ $profession->id == old('profession_id') ? ' selected' : '' }}>
                                 {{ $profession->title }}
                             </option>
-
                         @endforeach
 
                     </select>
+                </div>
+
+                <div class="form-group row mb-3">
+
+                    <div class="col-sm-2">Habilidades:</div>
+                    <div class="col-sm-10">
+
+                        @foreach ($skills as $skill)
+                            <div class="form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="skill_{{ $skill->id }}"
+                                    name="skills[{{ $skill->id }}]" value="{{ $skill->id }}"
+                                    {{ old("skills.{$skill->id}") ? ' checked' : '' }}>
+                                <label class="form-check-label" for="skill_{{ $skill->id }}">
+                                    {{ $skill->name }}
+                                </label>
+                            </div>
+                        @endforeach
+
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+
+                    <div class="col-sm-2">Rol:</div>
+                    <div class="col-sm-10">
+
+                        @foreach ($roles as $role => $name)
+                            <div class="form-check-inline">
+                                <input class="form-check-input" type="radio" id="role_{{ $role }}" name="role"
+                                    value="{{ $role }}" {{ old('role') == $role ? ' checked' : '' }}>
+                                <label class="form-check-label" for="role_{{ $role }}">
+                                    {{ $name }}
+                                </label>
+                            </div>
+                        @endforeach
+
+                    </div>
                 </div>
 
                 <div class="form-group row mb-3">

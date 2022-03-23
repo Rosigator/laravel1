@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Seeder;
 use App\User;
+use App\Profession;
+use App\UserProfile;
 
 class UserSeeder extends Seeder
 {
@@ -12,13 +14,25 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
-        factory(User::class)->create([
+        $prof_id = Profession::where('title', 'Desarrollador Back-End')->value('id');
+
+        $me = factory(User::class)->create([
             'name' => 'Héctor Castro Gómez',
             'email' => 'hector@mail.com',
-            'is_admin' => true,
+            'role' => 'admin',
             'password' => bcrypt('secret')
         ]);
 
-        factory(User::class, 40)->create();
+        $me->profile()->create([
+            'profession_id' => $prof_id,
+            'twitter' => 'https://twitter.com/hector',
+            'bio' => 'Soy la hostia en vinagre.'
+        ]);
+
+        factory(User::class, 40)->create()->each(function ($user) {
+            $user->profile()->create(
+                factory(UserProfile::class)->raw()
+            );
+        });
     }
 }
