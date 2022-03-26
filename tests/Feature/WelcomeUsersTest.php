@@ -27,6 +27,7 @@ class WelcomeUsersTest extends TestCase
     /** @test */
     public function it_fails_when_name_has_strange_chars()
     {
+        $this->withExceptionHandling();
         $this->get('usuarios/8s7a')
             ->assertStatus(404);
     }

@@ -36,6 +36,7 @@ class CreateUserRequest extends FormRequest
             ],
             'profession_id' => [
                 'nullable',
+                'present',
                 Rule::exists('professions', 'id')->whereNull('deleted_at')
             ],
             'skills' => [
@@ -43,7 +44,7 @@ class CreateUserRequest extends FormRequest
                 Rule::exists('skills', 'id')
             ],
             'password' => ['required', 'min:6'],
-            'twitter' => ['url', 'nullable'],
+            'twitter' => ['url', 'nullable', 'present'],
             'bio' => 'required'
         ];
     }
@@ -76,7 +77,7 @@ class CreateUserRequest extends FormRequest
                 'bio' => $this->bio
             ]);
 
-            $user->skills()->attach($this->skills);
+            $user->skills()->attach($this->skills ?? []);
         });
     }
 }
