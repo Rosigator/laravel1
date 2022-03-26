@@ -29,12 +29,32 @@ class UserController extends Controller
         return view('users.show', compact('user'));
     }
 
+    // Creación de usuarios
+    public function create()
+    {
+        $professions = Profession::orderBy('title', 'ASC')->get();
+        $skills = Skill::orderBy('name', 'ASC')->get();
+        $roles = trans('users.roles');
+        $user = new User();
+
+        return view('users.create', compact('user', 'professions', 'skills', 'roles'));
+    }
+
+    public function store(CreateUserRequest $request)
+    {
+        $request->createUser();
+
+        return redirect('usuarios');
+    }
+
     //Edición de datos de usuario
     public function edit(User $user)
     {
-        $professions = Profession::all();
+        $professions = Profession::orderBy('title', 'ASC')->get();
+        $skills = Skill::orderBy('name', 'ASC')->get();
+        $roles = trans('users.roles');
 
-        return view('users.edit', compact('user', 'professions'));
+        return view('users.edit', compact('user', 'professions', 'skills', 'roles'));
     }
 
     public function update(User $user)
@@ -57,25 +77,7 @@ class UserController extends Controller
         return redirect("usuarios/{$user->id}");
     }
 
-    // Creación de usuarios
-    public function create()
-    {
-        $professions = Profession::orderBy('title', 'ASC')->get();
-
-        $skills = Skill::orderBy('name', 'ASC')->get();
-
-        $roles = trans('users.roles');
-
-        return view('users.create', compact('professions', 'skills', 'roles'));
-    }
-
-    public function store(CreateUserRequest $request)
-    {
-        $request->createUser();
-
-        return redirect('usuarios');
-    }
-
+    // Eliminación de usuarios
     public function destroy(User $user)
     {
         $user->profile->delete();
