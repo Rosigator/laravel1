@@ -142,6 +142,21 @@ class CreateUsersTest extends TestCase
     }
 
     /** @test */
+    public function the_password_field_must_be_at_least_6_chars()
+    {
+        $this->handleValidationExceptions();
+
+        $this->post('usuarios/crear', $this->withData([
+            'password' => '123'
+        ]))
+            ->assertSessionHasErrors([
+                'password' => 'The password must be at least 6 characters.'
+            ]);
+
+        $this->assertDatabaseEmpty('users');
+    }
+
+    /** @test */
     public function the_email_field_is_required()
     {
         $this->handleValidationExceptions();
@@ -188,21 +203,6 @@ class CreateUsersTest extends TestCase
             ]);
 
         $this->assertEquals(1, User::count());
-    }
-
-    /** @test */
-    public function the_password_field_must_be_at_least_6_chars()
-    {
-        $this->handleValidationExceptions();
-
-        $this->post('usuarios/crear', $this->withData([
-            'password' => '123'
-        ]))
-            ->assertSessionHasErrors([
-                'password' => 'The password must be at least 6 characters.'
-            ]);
-
-        $this->assertDatabaseEmpty('users');
     }
 
     /** @test */
@@ -316,6 +316,8 @@ class CreateUsersTest extends TestCase
         $this->assertDatabaseEmpty('users');
         $this->assertDatabaseEmpty('user_skill');
     }
+
+    //ROLE VALIDATION
 
     /** @test */
     public function the_role_field_is_optional()

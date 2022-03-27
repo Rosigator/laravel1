@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
-use App\User;
+use App\{User, Profession, Skill, UserProfile};
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,10 +15,10 @@ class UpdateUsersTest extends TestCase
         'name' => 'Fernando Contreras',
         'email' => 'fernando@mail.com',
         'password' => 'secret',
+        'role' => 'user',
         'profession_id' => null,
         'twitter' => 'https://twitter.com/fernando',
-        'bio' => 'Soy un tío de puta madre.',
-        'role' => 'user'
+        'bio' => 'Soy un tío de puta madre.'
     ];
 
     /** @test */
@@ -42,18 +42,94 @@ class UpdateUsersTest extends TestCase
     {
         $user = factory(User::class)->create();
 
-        $this->put("usuarios/{$user->id}", [
-            'name' => 'Fernando Contreras',
-            'email' => 'fernando@mail.com',
-            'password' => 'secret',
-        ])->assertRedirect("usuarios/{$user->id}");
+        $old_profession = factory(Profession::class)->create();
+        $new_profession = factory(Profession::class)->create();
+
+        $old_skill1 = factory(Skill::class)->create();
+        $old_skill2 = factory(Skill::class)->create();
+        $new_skill1 = factory(Skill::class)->create();
+        $new_skill2 = factory(Skill::class)->create();
+
+        $user->profile()->save(factory(UserProfile::class)->make([
+            'profession_id' => $old_profession->id
+        ]));
+
+        $user->skills()->attach([$old_skill1->id, $old_skill2->id]);
+
+        $this->put("usuarios/{$user->id}", $this->withData([
+            'role' => 'admin',
+            'skills' => [$new_skill1->id, $new_skill2->id],
+            'profession_id' => $new_profession->id
+        ]))->assertRedirect("usuarios/{$user->id}");
 
         $this->assertCredentials([
             'name' => 'Fernando Contreras',
             'email' => 'fernando@mail.com',
             'password' => 'secret',
+            'role' => 'admin'
+        ]);
+
+        $this->assertDatabaseHas('user_profiles', [
+            'user_id' => $user->id,
+            'profession_id' => $new_profession->id,
+            'twitter' => 'https://twitter.com/fernando',
+            'bio' => 'Soy un tío de puta madre.',
+        ]);
+
+        $this->assertDatabaseCount('user_skill', 2);
+
+        $this->assertDatabaseHas('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $new_skill1->id
+        ]);
+
+        $this->assertDatabaseHas('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $new_skill2->id
+        ]);
+
+        $this->assertDatabaseMissing('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $old_skill1->id
+        ]);
+
+        $this->assertDatabaseMissing('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $old_skill2->id
         ]);
     }
+
+    // /** @test */
+    // public function the_user_is_redirected_to_previous_page_when_validation_fails()
+    // {
+    //     $this->handleValidationExceptions();
+
+    //     $profession = factory(Profession::class)->create;
+    //     $skillA = factory(Skill::class)->create();
+    //     $skillB = factory(Skill::class)->create();
+
+    //     $user = factory(User::class)->create([
+    //         'name' => 'Fernando Contreras',
+    //         'email' => 'fernando@mail.com',
+    //         'password' => 'secret',
+    //         'role' => 'user'
+    //     ]);
+
+    //     $user->profile()->create([
+    //         'profession_id' => $profession->id,
+    //         'twitter' => 'https://twitter.com/fernando',
+    //         'bio' => 'Soy un tío de puta madre.'
+    //     ]);
+
+    //     $user->
+
+    //     $this->from("usuarios/{$user->id}/editar")->put("usuarios/{$user->id}", [])
+    //         ->assertRedirect("usuarios/{$user->id}/editar");
+
+    //     $this->assertDatabaseHas('users');
+    // }
+
+    //NAME VALIDATION
 
     /** @test */
     public function the_name_field_is_required()
@@ -63,11 +139,9 @@ class UpdateUsersTest extends TestCase
         $user = factory(User::class)->create();
 
         $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => '',
-                'email' => 'floripondio@mail.com',
-                'password' => 'secret'
-            ])
+            ->put("usuarios/{$user->id}", $this->withData([
+                'name' => ''
+            ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
                 'name' => 'The name field is required.'
@@ -75,6 +149,8 @@ class UpdateUsersTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['email' => 'floripondio@mail.com']);
     }
+
+    //EMAIL VALIDATION
 
     /** @test */
     public function the_email_field_is_required()
@@ -84,43 +160,15 @@ class UpdateUsersTest extends TestCase
         $user = factory(User::class)->create();
 
         $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => 'Tropofosio Filibusteo',
-                'email' => '',
-                'password' => 'secret'
-            ])
+            ->put("usuarios/{$user->id}", $this->withData([
+                'email' => ''
+            ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
                 'email' => 'The email field is required.'
             ]);
 
         $this->assertDatabaseMissing('users', ['name' => 'Tropofosio Filibusteo']);
-    }
-
-    /** @test */
-    public function the_password_field_is_optional()
-    {
-        $this->handleValidationExceptions();
-
-        $old_password = 'clave_vieja';
-
-        $user = factory(User::class)->create([
-            'password' => bcrypt($old_password)
-        ]);
-
-        $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => 'Tropofosio Filibusteo',
-                'email' => 'tropofosio@mail.com',
-                'password' => ''
-            ])
-            ->assertRedirect("usuarios/{$user->id}");
-
-        $this->assertCredentials([
-            'name' => 'Tropofosio Filibusteo',
-            'email' => 'tropofosio@mail.com',
-            'password' => $old_password
-        ]);
     }
 
     /** @test */
@@ -131,11 +179,9 @@ class UpdateUsersTest extends TestCase
         $user = factory(User::class)->create();
 
         $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => 'Tropofosio Filibusteo',
-                'email' => 'asdf',
-                'password' => 'secret'
-            ])
+            ->put("usuarios/{$user->id}", $this->withData([
+                'email' => 'asdf'
+            ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
                 'email' => 'The email must be a valid email address.'
@@ -154,22 +200,98 @@ class UpdateUsersTest extends TestCase
         ]);
 
         $user = factory(User::class)->create([
+            'name' => 'Manolo',
             'email' => 'noexiste@mail.com'
         ]);
 
         $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => 'Tropofosio Filibusteo',
+            ->put("usuarios/{$user->id}", $this->withData([
                 'email' => 'existe@mail.com',
-                'password' => 'secret'
-            ])
+            ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
                 'email' => 'The email has already been taken.'
             ]);
 
-        $this->assertDatabaseMissing('users', ['name' => 'Tropofosio Filibusteo']);
+        $this->assertDatabaseMissing('users', [
+            'name' => 'Manolo',
+            'email' => 'existe@mail.com'
+        ]);
     }
+
+    /** @test */
+    public function the_users_email_can_stay_the_same()
+    {
+        $this->handleValidationExceptions();
+
+        $user = factory(User::class)->create([
+            'email' => 'suemail@mail.com'
+        ]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'email' => 'suemail@mail.com',
+            ]))
+            ->assertRedirect("usuarios/{$user->id}");
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'email' => 'suemail@mail.com'
+        ]);
+    }
+
+    // PASSWORD VALIDATION
+
+    /** @test */
+    public function the_password_field_is_optional()
+    {
+        $this->handleValidationExceptions();
+
+        $old_password = 'clave_vieja';
+
+        $user = factory(User::class)->create([
+            'password' => bcrypt($old_password)
+        ]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'password' => ''
+            ]))
+            ->assertRedirect("usuarios/{$user->id}");
+
+        $this->assertCredentials([
+            'email' => 'fernando@mail.com',
+            'password' => $old_password
+        ]);
+    }
+
+    /** @test */
+    public function the_password_field_must_be_at_least_6_chars()
+    {
+        $this->handleValidationExceptions();
+
+        $user = factory(User::class)->create([
+            'email' => 'fernando@mail.com',
+            'password' => bcrypt('oldpassword')
+        ]);
+
+        $this->from("usuarios/{$user->id}/editar")->put("usuarios/{$user->id}", $this->withData([
+            'password' => '123'
+        ]))
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors([
+                'password' => 'The password must be at least 6 characters.'
+            ]);
+
+        $this->assertCredentials([
+            'email' => 'fernando@mail.com',
+            'password' => 'oldpassword'
+        ]);
+    }
+
+    //ROLE VALIDATION
+
+
 
     /** @test */
     public function the_profession_field_value_exists()
@@ -179,18 +301,18 @@ class UpdateUsersTest extends TestCase
         $user = factory(User::class)->create();
 
         $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => 'Tropofosio Filibusteo',
-                'email' => 'tropofosio@mail.com',
-                'password' => '123456',
-                'profession' => 'asdf'
-            ])
+            ->put("usuarios/{$user->id}", $this->withData([
+                'profession_id' => 999
+            ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
-                'profession' => 'The selected profession is invalid.'
+                'profession_id' => 'The selected profession is invalid.'
             ]);
 
-        $this->assertDatabaseMissing('users', ['email' => 'tropofosio@mail.com']);
+        $this->assertDatabaseMissing('user_profiles', [
+            'user_id' => $user->id,
+            'profession_id' => 999
+        ]);
     }
 
     /** @test */
@@ -205,15 +327,88 @@ class UpdateUsersTest extends TestCase
         ]);
 
         $this->from("usuarios/{$user->id}/editar")
-            ->put("usuarios/{$user->id}", [
-                'name' => 'Cocoloco Pérez',
-                'email' => $oldemail,
-                'password' => ''
-            ])->assertRedirect("usuarios/{$user->id}");
+            ->put("usuarios/{$user->id}", $this->withData([
+                'email' => $oldemail
+            ]))->assertRedirect("usuarios/{$user->id}");
 
         $this->assertDatabaseHas('users', [
-            'name' => 'Cocoloco Pérez',
+            'id' => $user->id,
             'email' => $oldemail
         ]);
+    }
+
+    //SKILLS VALIDATION
+
+    /** @test */
+    public function it_detaches_all_the_skills_if_none_are_selected()
+    {
+        $this->handleValidationExceptions();
+
+        $old_skill1 = factory(Skill::class)->create();
+        $old_skill2 = factory(Skill::class)->create();
+
+        $user = factory(User::class)->create();
+        $user->skills()->attach([$old_skill1->id, $old_skill2->id]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData())
+            ->assertRedirect("usuarios/{$user->id}");
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id
+        ]);
+
+        $this->assertDatabaseEmpty('user_skill');
+    }
+
+    /** @test */
+    public function the_skills_must_be_an_array()
+    {
+        $this->handleValidationExceptions();
+
+        $old_skill1 = factory(Skill::class)->create();
+        $old_skill2 = factory(Skill::class)->create();
+
+        $user = factory(User::class)->create();
+        $user->skills()->attach([$old_skill1->id, $old_skill2->id]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'skills' => 'PHP, POO'
+            ]))
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors([
+                'skills' => 'The skills must be an array.'
+            ]);
+
+        $this->assertDatabaseHas('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $old_skill1->id
+        ]);
+
+        $this->assertDatabaseHas('user_skill', [
+            'user_id' => $user->id,
+            'skill_id' => $old_skill2->id
+        ]);
+    }
+
+    /** @test */
+    public function the_skills_must_be_valid()
+    {
+        $this->handleValidationExceptions();
+
+        $new_skill = factory(Skill::class)->create();
+        $user = factory(User::class)->create();
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'skills' => [$new_skill->id + 1]
+            ]))
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors([
+                'skills' => 'The chosen skill is not valid.'
+            ]);
+
+        $this->assertDatabaseEmpty('user_skill');
     }
 }

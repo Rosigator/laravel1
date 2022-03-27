@@ -62,8 +62,21 @@ class UserController extends Controller
         $data = request()->validate([
             'name' => 'required',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'profession' => 'exists:professions,title',
-            'password' => ''
+            'password' => ['nullable', 'min:6'],
+            'role' => '',
+            'profession_id' => [
+                'nullable',
+                Rule::exists('professions', 'id')
+            ],
+            'bio' => '',
+            'twitter' => '',
+            'skills' => [
+                'array',
+                Rule::exists('skills', 'id')
+            ]
+        ], [
+            'profession_id.exists' => 'The selected profession is invalid.',
+            'skills.exists' => 'The chosen skill is not valid.',
         ]);
 
         if ($data['password'] != null) {
@@ -72,7 +85,13 @@ class UserController extends Controller
             unset($data['password']);
         }
 
-        $user->update($data);
+        $user->fill($data);
+        $user->role = $data['role'];
+        $user->update();
+
+        $user->profile->update($data);
+
+        $user->skills()->sync($data['skills'] ?? []);
 
         return redirect("usuarios/{$user->id}");
     }
