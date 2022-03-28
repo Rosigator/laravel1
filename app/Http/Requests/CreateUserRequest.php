@@ -44,7 +44,7 @@ class CreateUserRequest extends FormRequest
                 Rule::exists('skills', 'id')
             ],
             'password' => ['required', 'min:6'],
-            'twitter' => ['url', 'nullable', 'present'],
+            'twitter' => ['nullable', 'url', 'present'],
             'bio' => 'required'
         ];
     }
@@ -52,8 +52,9 @@ class CreateUserRequest extends FormRequest
     public function messages()
     {
         return [
-            'profession_id.exists' => 'The chosen profession is not valid.',
-            'skills.exists' => 'The chosen skill is not valid.',
+            'profession_id.exists' => 'The selected profession is not valid.',
+            'skills.exists' => 'The selected skills are not valid.',
+            'twitter.url' => 'The twitter field must be an url'
         ];
     }
 

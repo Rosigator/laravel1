@@ -275,9 +275,10 @@ class UpdateUsersTest extends TestCase
             'password' => bcrypt('oldpassword')
         ]);
 
-        $this->from("usuarios/{$user->id}/editar")->put("usuarios/{$user->id}", $this->withData([
-            'password' => '123'
-        ]))
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'password' => '123'
+            ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
                 'password' => 'The password must be at least 6 characters.'
@@ -291,14 +292,97 @@ class UpdateUsersTest extends TestCase
 
     //ROLE VALIDATION
 
-
-
     /** @test */
-    public function the_profession_field_value_exists()
+    public function the_role_field_is_required()
     {
         $this->handleValidationExceptions();
 
+        $user = factory(User::class)->create([
+            'role' => 'user'
+        ]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'role' => null
+            ]))
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors([
+                'role' => 'The role field is required.'
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'role' => 'user'
+        ]);
+    }
+
+    //PROFESSION VALIDATION
+
+    /** @test */
+    public function the_profession_id_field_is_optional()
+    {
+        $this->handleValidationExceptions();
+
+        $profession = factory(Profession::class)->create();
+
         $user = factory(User::class)->create();
+        $user->profile()->create([
+            'bio' => 'asdf',
+            'profession_id' => $profession->id
+        ]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'profession_id' => null
+            ]))->assertRedirect("usuarios/{$user->id}");
+
+        $this->assertDatabaseHas('user_profiles', [
+            'user_id' => $user->id,
+            'profession_id' => null
+        ]);
+    }
+
+    /** @test */
+    public function the_profession_id_field_must_be_present()
+    {
+        $this->handleValidationExceptions();
+
+        $profession = factory(Profession::class)->create();
+
+        $user = factory(User::class)->create();
+        $user->profile()->create([
+            'bio' => 'asdf',
+            'profession_id' => $profession->id
+        ]);
+
+        $data = $this->withData();
+        unset($data['profession_id']);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $data)
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors([
+                'profession_id' => 'The profession field must be present.',
+            ]);
+
+        $this->assertDatabaseHas('user_profiles', [
+            'user_id' => $user->id,
+            'profession_id' => $profession->id
+        ]);
+    }
+
+    /** @test */
+    public function the_profession_id_field_must_be_valid()
+    {
+        $this->handleValidationExceptions();
+
+        $profession = factory(Profession::class)->create();
+
+        $user = factory(User::class)->create();
+        $user->profile()->create([
+            'bio' => 'asdf',
+            'profession_id' => $profession->id
+        ]);
 
         $this->from("usuarios/{$user->id}/editar")
             ->put("usuarios/{$user->id}", $this->withData([
@@ -306,34 +390,41 @@ class UpdateUsersTest extends TestCase
             ]))
             ->assertRedirect("usuarios/{$user->id}/editar")
             ->assertSessionHasErrors([
-                'profession_id' => 'The selected profession is invalid.'
+                'profession_id' => 'The selected profession is not valid.'
             ]);
 
-        $this->assertDatabaseMissing('user_profiles', [
+        $this->assertDatabaseHas('user_profiles', [
             'user_id' => $user->id,
-            'profession_id' => 999
+            'profession_id' => $profession->id
         ]);
     }
 
     /** @test */
-    public function the_user_email_can_stay_the_same()
+    public function only_selectable_professions_are_valid()
     {
         $this->handleValidationExceptions();
 
-        $oldemail = 'oldemail@mail.com';
+        $nonDeletedProfession = factory(Profession::class)->create();
+        $deletedProfession = factory(Profession::class)->create([
+            'deleted_at' => now()->format('Y-m-d')
+        ]);
 
-        $user = factory(User::class)->create([
-            'email' => $oldemail
+        $user = factory(User::class)->create();
+        $user->profile()->create([
+            'bio' => 'asdf',
+            'profession_id' => $nonDeletedProfession->id
         ]);
 
         $this->from("usuarios/{$user->id}/editar")
             ->put("usuarios/{$user->id}", $this->withData([
-                'email' => $oldemail
-            ]))->assertRedirect("usuarios/{$user->id}");
+                'profession_id' => $deletedProfession->id
+            ]))
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors(['profession_id']);
 
-        $this->assertDatabaseHas('users', [
-            'id' => $user->id,
-            'email' => $oldemail
+        $this->assertDatabaseHas('user_profiles', [
+            'user_id' => $user->id,
+            'profession_id' => $nonDeletedProfession->id
         ]);
     }
 
@@ -410,5 +501,33 @@ class UpdateUsersTest extends TestCase
             ]);
 
         $this->assertDatabaseEmpty('user_skill');
+    }
+
+    //BIO VALIDATION
+
+    /** @test */
+    public function the_bio_field_is_required()
+    {
+        $this->handleValidationExceptions();
+
+        $user = factory(User::class)->create();
+        $user->profile()->create([
+            'bio' => 'asdf',
+            'profession_id' => null
+        ]);
+
+        $this->from("usuarios/{$user->id}/editar")
+            ->put("usuarios/{$user->id}", $this->withData([
+                'bio' => null
+            ]))
+            ->assertRedirect("usuarios/{$user->id}/editar")
+            ->assertSessionHasErrors([
+                'bio' => 'The bio field is required.',
+            ]);
+
+        $this->assertDatabaseHas('user_profiles', [
+            'user_id' => $user->id,
+            'bio' => 'asdf'
+        ]);
     }
 }

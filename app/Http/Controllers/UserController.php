@@ -8,6 +8,7 @@ use App\Profession;
 use Illuminate\Http\Request;
 use App\UserProfile as UserProfile;
 use Illuminate\Validation\Rule as Rule;
+use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Support\Facades\DB as DB;
 use App\Http\Requests\CreateUserRequest as CreateUserRequest;
 
@@ -57,41 +58,9 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'professions', 'skills', 'roles'));
     }
 
-    public function update(User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $data = request()->validate([
-            'name' => 'required',
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'password' => ['nullable', 'min:6'],
-            'role' => '',
-            'profession_id' => [
-                'nullable',
-                Rule::exists('professions', 'id')
-            ],
-            'bio' => '',
-            'twitter' => '',
-            'skills' => [
-                'array',
-                Rule::exists('skills', 'id')
-            ]
-        ], [
-            'profession_id.exists' => 'The selected profession is invalid.',
-            'skills.exists' => 'The chosen skill is not valid.',
-        ]);
-
-        if ($data['password'] != null) {
-            $data['password'] = bcrypt($data['password']);
-        } else {
-            unset($data['password']);
-        }
-
-        $user->fill($data);
-        $user->role = $data['role'];
-        $user->update();
-
-        $user->profile->update($data);
-
-        $user->skills()->sync($data['skills'] ?? []);
+        $request->updateUser($user);
 
         return redirect("usuarios/{$user->id}");
     }

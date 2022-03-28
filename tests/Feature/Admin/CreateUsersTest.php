@@ -205,14 +205,16 @@ class CreateUsersTest extends TestCase
         $this->assertEquals(1, User::count());
     }
 
+    //PROFESSION VALIDATION
+
     /** @test */
     public function the_profession_id_field_is_optional()
     {
         $this->handleValidationExceptions();
 
-        $this->from('/usuarios/nuevo')->post('usuarios/crear', $this->withData([
+        $this->post('usuarios/crear', $this->withData([
             'profession_id' => null
-        ]))->assertRedirect('usuarios');
+        ]));
 
         $this->assertCredentials([
             'name' => 'Fernando Contreras',
@@ -236,7 +238,7 @@ class CreateUsersTest extends TestCase
             'profession_id' => 300
         ]))
             ->assertSessionHasErrors([
-                'profession_id' => 'The chosen profession is not valid.'
+                'profession_id' => 'The selected profession is not valid.'
             ]);
 
         $this->assertDatabaseEmpty('users');
@@ -258,6 +260,8 @@ class CreateUsersTest extends TestCase
 
         $this->assertDatabaseEmpty('users');
     }
+
+    //SKILL VALIDATION
 
     /** @test */
     public function the_skills_are_optional()
@@ -310,7 +314,7 @@ class CreateUsersTest extends TestCase
             ]
         ]))
             ->assertSessionHasErrors([
-                'skills' => 'The chosen skill is not valid.'
+                'skills' => 'The selected skills are not valid.'
             ]);
 
         $this->assertDatabaseEmpty('users');
@@ -347,14 +351,32 @@ class CreateUsersTest extends TestCase
         $this->assertDatabaseEmpty('users');
     }
 
+    //BIO VALIDATION
+
+    /** @test */
+    public function the_bio_field_is_required()
+    {
+        $this->handleValidationExceptions();
+
+        $this->post('usuarios/crear', $this->withData([
+            'bio' => '',
+        ]))
+            ->assertSessionHasErrors([
+                'bio' => 'The bio field is required.'
+            ]);
+        $this->assertDatabaseEmpty('users');
+    }
+
+    //TWITTER VALIDATION
+
     /** @test */
     public function the_twitter_field_is_optional()
     {
         $this->handleValidationExceptions();
 
-        $this->from('usuarios/nuevo')->post('usuarios/crear', $this->withData([
+        $this->post('usuarios/crear', $this->withData([
             'twitter' => ''
-        ]))->assertRedirect('usuarios');
+        ]));
 
         $this->assertCredentials([
             'name' => 'Fernando Contreras',
@@ -367,5 +389,35 @@ class CreateUsersTest extends TestCase
             'bio' => 'Soy un tío de puta madre.',
             'user_id' => User::findByEmail('fernando@mail.com')->id
         ]);
+    }
+
+    /** @test */
+    public function the_twitter_field_must_be_an_url()
+    {
+        $this->handleValidationExceptions();
+
+        $this->post('usuarios/crear', $this->withData([
+            'twitter' => 'asdf'
+        ]))->assertSessionHasErrors([
+            'twitter' => 'The twitter field must be an url'
+        ]);
+
+        $this->assertDatabaseEmpty('users');
+    }
+
+    /** @test */
+    public function the_twitter_field_must_be_present()
+    {
+        $this->handleValidationExceptions();
+
+        $data = $this->withData();
+        unset($data['twitter']);
+
+        $this->post('usuarios/crear', $data)
+            ->assertSessionHasErrors([
+                'twitter' => 'The twitter field must be present.'
+            ]);
+
+        $this->assertDatabaseEmpty('users');
     }
 }
